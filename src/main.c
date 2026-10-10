@@ -1,30 +1,41 @@
-#include "stm32f1xx_hal.h"
+#include "stm32f1xx.h" 
 
-void GPIO_Init(void)
+void SystemClock_Config(void);
+static void MX_GPIO_Init_BareMetal(void);
+
+void main(void)
 {
-    __HAL_RCC_GPIOC_CLK_ENABLE(); 
+  SystemClock_Config();
+  MX_GPIO_Init_BareMetal();
 
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin = GPIO_PIN_13;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;  
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  while (1)
+  {
+    if ((GPIOA->IDR & (1 << 0)) == 0) 
+    {
+        GPIOC->ODR |= (1 << 13); 
+    }
+    else
+    {
+        GPIOC->ODR &= ~(1 << 13); 
+    }
+  }
 }
 
-int main(void)
+static void MX_GPIO_Init_BareMetal(void)
 {
-    HAL_Init();  
-    GPIO_Init(); 
+  RCC->APB2ENR |= (1 << 2) | (1 << 4);
 
-    while (1)
-    {
-        // LED ON (PC13 LOW/RESET)
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-        HAL_Delay(500);
-        
-        // LED OFF (PC13 HIGH/SET)
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-        HAL_Delay(500);
-    }
+
+  GPIOC->CRH &= ~(0xF << 20); 
+  GPIOC->CRH |= (0x2 << 20);  
+  GPIOC->ODR &= ~(1 << 13);   
+
+  
+  GPIOA->CRL &= ~(0xF << 0);
+  GPIOA->CRL |= (0x8 << 0);   
+  GPIOA->ODR |= (1 << 0);     
+}
+
+void SystemClock_Config(void)
+{
 }
